@@ -1,4 +1,4 @@
-use avian3d::{math::{Scalar, Vector}, prelude::{AngularVelocity, CenterOfMass, LinearVelocity, Mass, Physics}};
+use avian3d::{math::{Scalar, Vector}, prelude::{AngularVelocity, CenterOfMass, ContactGraph, LinearVelocity, Mass, Physics}};
 use bevy::{
     prelude::*, render::
         render_resource::*, shader::ShaderRef
@@ -49,6 +49,7 @@ impl Plugin for GravityComputePlugin {
                 Update,
                 (
                     handle_inputs,
+                    handle_collisions,
                     // report_gravity.run_if(|| false),
                 ).chain()
                 // .in_set(ComputeSet)
@@ -277,6 +278,7 @@ fn handle_outputs(
         // &Mass,
         &GravityObject,
     ), With<GravityObject>>,
+    // user_driven_q: Query<&UserGravityOverride>,
     mut coll_writer: MessageWriter<CollisionUpdate>,
 ) {
     if phys_time.is_paused() || !galaxy_params.enable_gravity {
@@ -299,13 +301,16 @@ fn handle_outputs(
             // log::warn!("out at {index}");
             break
         };
+        // if user_driven_q.contains(ent) {
+        //     continue
+        // }
         if edits.edited.contains(&ent) {
             edited += 1;
             continue;
         }
         let Ok((mut xfrm, mut vel, mut ang_vel, _)) = phys_q.get_mut(ent) else {
             // May have just been deleted.
-            warn!("unknown entity {ent}");
+            debug!("unknown entity {ent}");
             continue;
         };
         if point.position.is_finite() && point.velocity.is_finite() {
@@ -330,10 +335,10 @@ fn handle_outputs(
         }
     }
     if edited > 0 {
-        info!("edited {edited} of {}", uniforms.num_elements);
+        debug!("edited {edited} of {}", uniforms.num_elements);
     }
     if moved < uniforms.num_elements {
-        info!("moved {moved} of {}", uniforms.num_elements);
+        debug!("moved {moved} of {}", uniforms.num_elements);
     }
 
     let collisions = worker.read_vec::<UVec4>("colliders");
@@ -463,5 +468,26 @@ fn handle_inputs(
         worker.write("dt", &dt);
         // println!("run {run_once} with dt = {dt} when paused {}", time.is_paused());
         worker.execute();
+    }
+}
+
+fn handle_collisions(
+    // mut commands: Commands,
+    graph: Res<ContactGraph>,
+    mut edits: ResMut<GalaxyEdits>,
+    grav_q: Query<Entity, With<GravityObject>>,
+    // grav_q: Query<Entity, (With<GravityObject>, Without<UserGravityOverride>)>,
+) {
+    for pair in graph.active_pairs() {
+        if pair.is_touching() {
+            if grav_q.contains(pair.collider1) {
+                // commands.entity(pair.collider1).insert(UserGravityOverride::new_temporary());
+                edits.edited.insert(pair.collider1);
+            }
+            if grav_q.contains(pair.collider2) {
+                // commands.entity(pair.collider2).insert(UserGravityOverride::new_temporary());
+                edits.edited.insert(pair.collider2);
+            }
+        }
     }
 }

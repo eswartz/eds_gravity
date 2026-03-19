@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use crate::game::gravity::GalaxyEdits;
 use crate::game::*;
 
 use bevy_mod_outline::{OutlineMode, OutlinePlugin, OutlineVolume};
@@ -344,6 +345,9 @@ fn handle_fire(
 
     grabbed_opt: Option<Res<GrabbedItem>>,
     exist_q: Query<Entity>,
+    // mut override_q: Query<&mut UserGravityOverride>,
+    mut edits: ResMut<GalaxyEdits>,
+
     fx: Res<CommonFxAssets>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -356,7 +360,7 @@ fn handle_fire(
                 commands.entity(grabbed.entity).insert((
                     LinearVelocity(xfrm.rotation * Vec3::NEG_Z * event.power),
                 ));
-                release_grab(commands.reborrow(), Some(grabbed.as_ref()));
+                release_grab(commands.reborrow(), Some(grabbed.as_ref()), &mut edits);
                 any = true;
             }
             commands.remove_resource::<GrabbedItem>();
@@ -490,12 +494,14 @@ fn check_grab_actions(
     hilit_q: Query<Entity, With<Highlighted>>,
     mut grabbed_opt: Option<ResMut<GrabbedItem>>,
     grabbing_force: Res<GrabbingForce>,
+    // mut override_q: Query<&mut UserGravityOverride>,
 
     mut gizmos: Gizmos,
     camera_q: Single<&GlobalTransform, (With<Camera3d>, With<WorldCamera>)>,
 
     mut raycast: MeshRayCast,
     mut phys_info_q: Query<(&GlobalTransform, &Transform, Option<&LockedAxes>, Forces)>,
+    mut edits: ResMut<GalaxyEdits>,
 ) {
     let Some((grab_events, _grab_time)) = grab_action_q.iter().next() else { return };
 
@@ -546,10 +552,17 @@ fn check_grab_actions(
 
                 // LockedAxes::ALL_LOCKED,
                 LockedAxes::ROTATION_LOCKED,
+
+                // UserGravityOverride::default(),
             ));
             commands.queue_silenced(SleepBody(highlight));
+
+            edits.edited.insert(highlight);
+
         }
     } else if grab_events.contains(ActionEvents::FIRE) && let Some(grabbed) = &mut grabbed_opt {
+        edits.edited.insert(grabbed.entity);
+
         if let Some((extend_events, extend_action)) = extend_action_q.iter().next() {
             if extend_events.contains(ActionEvents::FIRE) {
                 let new_dist = (grabbed.distance + **extend_action).clamp(0.1, 100.0);
@@ -599,11 +612,16 @@ fn check_grab_actions(
     } else if grab_events.contains(ActionEvents::COMPLETE) {
         // Let go.
         let grabbed_opt = grabbed_opt.map(|gi| gi.clone());
-        release_grab(commands.reborrow(), grabbed_opt.as_ref());
+        release_grab(commands.reborrow(), grabbed_opt.as_ref(), &mut edits);
     }
 }
 
-fn release_grab(mut commands: Commands, grabbed_opt: Option<&GrabbedItem>) {
+fn release_grab(
+    mut commands: Commands,
+    grabbed_opt: Option<&GrabbedItem>,
+    // override_q: &mut Query<&mut UserGravityOverride>,
+    edits: &mut ResMut<GalaxyEdits>,
+) {
     commands.remove_resource::<GrabbedItem>();
     if let Some(grabbed) = &grabbed_opt {
         let mut ent_commands = commands.entity(grabbed.entity);
@@ -615,6 +633,11 @@ fn release_grab(mut commands: Commands, grabbed_opt: Option<&GrabbedItem>) {
         } else {
             ent_commands.try_remove::<LockedAxes>();
         }
-        commands.queue_silenced(WakeBody(grabbed.entity));
+        // if let Ok(mut over) = override_q.get_mut(grabbed.entity) {
+        //     over.mark_removable(Duration::from_secs(3));
+        // };
+        edits.edited.insert(grabbed.entity);
+        // ent_commands.try_remove::<UserDriven>();
+        // commands.queue_silenced(WakeBody(grabbed.entity));
     }
 }

@@ -1,9 +1,11 @@
 use std::collections::VecDeque;
+use std::time::Duration;
 
-use avian3d::math::Vector;
 use bevy::ecs::entity::EntityHashSet;
 use bevy::prelude::*;
 use avian3d::prelude::*;
+use eds_bevy_common::ProgramState;
+use eds_bevy_common::is_paused;
 use serde::Deserialize;
 use serde::Serialize;
 use strum::EnumIter;
@@ -26,6 +28,11 @@ impl Plugin for GravityPlugin {
             .add_message::<CollisionUpdate>()
             .insert_resource(GalaxyState::with_compute(true))
             .add_plugins(GravityComputePlugin)
+            // .add_systems(Update,
+            //     timeout_gravity_override
+            //         .run_if(not(is_paused))
+            //         .run_if(in_state(ProgramState::InGame))
+            // )
             // .add_systems(Update,
             //     (damp_distance, damp_spin)
             //         .in_set(SimulationSet)
@@ -239,3 +246,47 @@ impl Default for GravityObject {
         }
     }
 }
+
+/// Mark an entity as user-driven.
+///
+#[derive(Component, Default)]
+#[component(storage = "SparseSet")]
+pub struct UserGravityOverride;
+
+// impl UserGravityOverride {
+//     pub fn new_temporary() -> Self {
+//         Self {
+//             can_remove: true,
+//             timeout: Duration::from_secs_f32(1.0 / 10.0),
+//         }
+//     }
+//     pub fn mark_removable(&mut self, timeout: Duration) {
+//         if !self.can_remove {
+//             self.can_remove = true;
+//             self.timeout = timeout;
+//         }
+//     }
+
+//     pub fn pass_time(&mut self, delta: Duration) -> bool {
+//         if self.can_remove {
+//             self.timeout = self.timeout.saturating_sub(delta);
+//             self.timeout.is_zero()
+//         } else {
+//             false
+//         }
+//     }
+// }
+
+// fn timeout_gravity_override(
+//     mut commands: Commands,
+//     mut override_q: Query<(Entity, &mut UserGravityOverride)>,
+//     mut edits: ResMut<GalaxyEdits>,
+//     time: Res<Time<Physics>>,
+// ) {
+//     for (ent, mut over) in override_q.iter_mut() {
+//         if over.pass_time(time.delta()) {
+//             commands.entity(ent).try_remove::<UserGravityOverride>();
+//             edits.edited.insert(ent);
+//         }
+//     }
+// }
