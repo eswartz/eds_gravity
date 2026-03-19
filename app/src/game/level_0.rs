@@ -115,7 +115,7 @@ fn on_level_loaded(
                         LinearDamping(LIVE_LIN_DAMP),
                         AngularDamping(LIVE_ANG_DAMP),
                         // CenterOfMass::new(0., -cube_size / 4.0, 0.0),
-                        Mass(CUBE_MASS + rng.random_range(0.0 .. 100.0)),
+                        Mass(CUBE_MASS + rng.random_range(0.0 .. 1000.0)),
                         CenterOfMass::default(),
                         CollisionMargin(0.),
                         // CollisionMargin(0.01),
