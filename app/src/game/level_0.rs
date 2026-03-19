@@ -5,6 +5,7 @@ use eds_bevy_common::*;
 
 use bevy::prelude::*;
 use avian3d::prelude::*;
+use rand::RngExt;
 
 pub(crate) const ID: &str = "level0";
 pub(crate) const NAME: &str = "Level 0";
@@ -79,7 +80,8 @@ fn on_level_loaded(
         ..default()
     };
     let center = Vec3::new(-5.0, 5.0, 5.0);
-    const D: i32 = 6;
+    const D: i32 = 8;
+    let mut rng = rand::rng();
     for x in -D..D {
         for y in 0..D*2 {
             for z in -D..D {
@@ -113,7 +115,7 @@ fn on_level_loaded(
                         LinearDamping(LIVE_LIN_DAMP),
                         AngularDamping(LIVE_ANG_DAMP),
                         // CenterOfMass::new(0., -cube_size / 4.0, 0.0),
-                        Mass(CUBE_MASS),
+                        Mass(CUBE_MASS + rng.random_range(0.0 .. 100.0)),
                         CenterOfMass::default(),
                         CollisionMargin(0.),
                         // CollisionMargin(0.01),

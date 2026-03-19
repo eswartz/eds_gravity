@@ -278,7 +278,6 @@ fn handle_outputs(
         // &Mass,
         &GravityObject,
     ), With<GravityObject>>,
-    // user_driven_q: Query<&UserGravityOverride>,
     mut coll_writer: MessageWriter<CollisionUpdate>,
 ) {
     if phys_time.is_paused() || !galaxy_params.enable_gravity {
@@ -476,16 +475,13 @@ fn handle_collisions(
     graph: Res<ContactGraph>,
     mut edits: ResMut<GalaxyEdits>,
     grav_q: Query<Entity, With<GravityObject>>,
-    // grav_q: Query<Entity, (With<GravityObject>, Without<UserGravityOverride>)>,
 ) {
     for pair in graph.active_pairs() {
         if pair.is_touching() {
             if grav_q.contains(pair.collider1) {
-                // commands.entity(pair.collider1).insert(UserGravityOverride::new_temporary());
                 edits.edited.insert(pair.collider1);
             }
             if grav_q.contains(pair.collider2) {
-                // commands.entity(pair.collider2).insert(UserGravityOverride::new_temporary());
                 edits.edited.insert(pair.collider2);
             }
         }

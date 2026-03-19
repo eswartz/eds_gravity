@@ -119,6 +119,8 @@ impl Default for GrabbingForce {
     }
 }
 
+const OUTLINE_WIDTH: f32 = 2.0;
+
 // /// Previously highlighted thing (only defined if so).
 // #[derive(Resource, Reflect, Debug)]
 // #[reflect(Resource)]
@@ -456,7 +458,7 @@ fn update_highlight_ui(
             Highlighted,
             OutlineVolume {
                 visible: true,
-                width: 4.0,
+                width: OUTLINE_WIDTH,
                 colour: Color::WHITE.with_alpha(0.5),
             },
             OutlineMode::FloodFlat,
@@ -490,11 +492,9 @@ fn check_grab_actions(
     grab_action_q: Query<(&ActionEvents, &ActionTime), (With<Action<actions::ToggleGrab>>, With<PlayerAction>)>,
     extend_action_q: Query<(&ActionEvents, &Action<actions::CycleExtendGrab>), With<PlayerAction>>,
 
-    // highlight_opt: Option<Res<HighlightedItem>>,
     hilit_q: Query<Entity, With<Highlighted>>,
     mut grabbed_opt: Option<ResMut<GrabbedItem>>,
     grabbing_force: Res<GrabbingForce>,
-    // mut override_q: Query<&mut UserGravityOverride>,
 
     mut gizmos: Gizmos,
     camera_q: Single<&GlobalTransform, (With<Camera3d>, With<WorldCamera>)>,
@@ -544,16 +544,14 @@ fn check_grab_actions(
             commands.entity(highlight).try_insert((
                 Selected,
                 OutlineVolume {
-                visible: true,
-                    width: 4.0,
+                    visible: true,
+                    width: OUTLINE_WIDTH,
                     colour: tailwind::LIME_500.into(),
                 },
                 OutlineMode::FloodFlat,
 
                 // LockedAxes::ALL_LOCKED,
                 LockedAxes::ROTATION_LOCKED,
-
-                // UserGravityOverride::default(),
             ));
             commands.queue_silenced(SleepBody(highlight));
 
@@ -619,7 +617,6 @@ fn check_grab_actions(
 fn release_grab(
     mut commands: Commands,
     grabbed_opt: Option<&GrabbedItem>,
-    // override_q: &mut Query<&mut UserGravityOverride>,
     edits: &mut ResMut<GalaxyEdits>,
 ) {
     commands.remove_resource::<GrabbedItem>();
@@ -633,11 +630,6 @@ fn release_grab(
         } else {
             ent_commands.try_remove::<LockedAxes>();
         }
-        // if let Ok(mut over) = override_q.get_mut(grabbed.entity) {
-        //     over.mark_removable(Duration::from_secs(3));
-        // };
         edits.edited.insert(grabbed.entity);
-        // ent_commands.try_remove::<UserDriven>();
-        // commands.queue_silenced(WakeBody(grabbed.entity));
     }
 }
