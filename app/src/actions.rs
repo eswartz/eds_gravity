@@ -45,41 +45,11 @@ pub fn assign_extra_actions(
     mut commands: Commands,
     include: impl Bundle + Clone,
 ) {
-    // commands.spawn((
-    //     include.clone(),
-    //     Action::<actions::ToggleSelect>::new(),
-    //     bindings![
-    //         KeyCode::AltLeft,
-    //         KeyCode::AltRight,
-    //         GamepadButton::LeftThumb,
-    //     ],
-    // ));
-    commands.spawn((
-        include.clone(),
-        Action::<actions::ToggleGrab>::new(),
-        bindings![
-            MouseButton::Right,
-            KeyCode::AltLeft,
-            KeyCode::AltRight,
-            GamepadButton::LeftTrigger2,
-        ],
-    ));
-    commands.spawn((
-        include.clone(),
-        Action::<actions::CycleExtendGrab>::new(),
-        Scale::splat(0.25),
-        Bindings::spawn((
-            Spawn((Binding::mouse_wheel(), SwizzleAxis::YYY)),
-            Bidirectional::new(KeyCode::ArrowUp, KeyCode::ArrowDown),
-            Bidirectional::new(GamepadButton::RightTrigger, GamepadButton::LeftTrigger),
-        )),
-    ));
-
     commands.spawn((
         include.clone(),
         Action::<actions::ChangeCamera>::new(),
         bindings![
-            KeyCode::KeyV.with_mod_keys(CTRL_COMMAND),
+            KeyCode::KeyV.with_mod_keys(MOD_CTRL_COMMAND),
         ],
     ));
 }
