@@ -1,4 +1,4 @@
-use crate::game::{Cube, Floor};
+use crate::game::{Floor, Star};
 
 use avian3d::prelude::{Collisions, LinearVelocity};
 use bevy_seedling::prelude::{SpatialBasicNode, VolumeNode};
@@ -30,7 +30,7 @@ fn spawn_noise_on_collision(
     fx: Res<CommonFxAssets>,
     xfrm_vel_q: Query<(&GlobalTransform, &LinearVelocity)>,
     projectile_q: Query<&Projectile>,
-    cube_q: Query<&Cube>,
+    item_q: Query<&Star>,
     floor_q: Query<&Floor>,
     // sfx_q: Query<&Sfx>,
     mut commands: Commands,
@@ -49,7 +49,7 @@ fn spawn_noise_on_collision(
         if !event.is_touching() {
             continue
         }
-        let cube_cube = cube_q.contains(event.collider1) && cube_q.contains(event.collider2);
+        let cube_cube = item_q.contains(event.collider1) && item_q.contains(event.collider2);
         let floor = floor_q.contains(event.collider1) || floor_q.contains(event.collider2);
         let target = if projectile_q.contains(event.collider1) {
             event.collider1

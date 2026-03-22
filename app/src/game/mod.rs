@@ -215,11 +215,11 @@ const END_LEVEL_DELAY_SECS: u64 = 3;
 #[type_path = "game"]
 pub struct AutoEndLevelTimer(pub(crate) Timer);
 
-/// A cube.
+/// A star.
 #[derive(Component, Reflect, Default, Clone)]
 #[reflect(Component, Clone, Default)]
 #[type_path = "game"]
-pub(crate) struct Cube;
+pub(crate) struct Star;
 
 /// A floor.
 #[derive(Component, Reflect, Default, Clone)]
