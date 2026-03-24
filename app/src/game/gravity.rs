@@ -169,7 +169,7 @@ impl Default for GalaxyParams {
             enable_gravity: true,
             // gravity: 6.674e-11 * 1e-9, // 6.674×10−11 m³⋅kg−1⋅s−2
             // gravity: 6.674e-11, // 6.674×10−11 m³⋅kg−1⋅s−2
-            gravity: 1e-6,
+            gravity: 1e-5,
             grav_scales_by_linear_distance: false,
             gravity_distance_scale: 1e-2,
 

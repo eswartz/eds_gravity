@@ -63,7 +63,7 @@ fn on_level_loaded(
     #[allow(unused)]
     let cuboid_round = (ITEM_SIZE - cuboid_size) / 2.0;
 
-    const ITEM_GAP: f32 = 0.25;
+    const ITEM_GAP: f32 = 10.25;
     let axis_scale = Vec3::splat(ITEM_SIZE + ITEM_GAP);
 
     let gravity_object = GravityObject {
@@ -72,10 +72,10 @@ fn on_level_loaded(
         ..default()
     };
     let center = Vec3::new(-5.0, 5.0, 5.0);
-    const D: i32 = 8;
+    const D: i32 = 10;
     let mut rng = rand::rng();
     for x in -D..D {
-        for y in 0..D*2 {
+        for y in -D..D {
             for z in -D..D {
                 let position = Vec3::new(x as f32, y as f32, z as f32) * axis_scale + center;
                 commands.spawn((
@@ -92,18 +92,20 @@ fn on_level_loaded(
                     ),
                     (
                         gravity_object.clone(),
-                        Collider::sphere(ITEM_SIZE / 2.),
+                        // Collider::sphere(ITEM_SIZE / 2.),
                         RigidBody::Dynamic,
+                        // RigidBody::Kinematic,
+                        // RigidBody::Static,
                         // Collider::round_cuboid(cuboid_size, cuboid_size, cuboid_size, cuboid_round),
                         Restitution::new(0.05),
                         Friction::new(0.),
                         SleepThreshold {
-                            linear: 0.125,
-                            angular: 0.125,
+                            linear: 0., //.125,
+                            angular: 0., //.125,
                         },
                         LinearDamping(0.1),
                         AngularDamping(0.1),
-                        Mass(ITEM_MASS + rng.random_range(0.0 .. 1000.0)),
+                        Mass(ITEM_MASS + rng.random_range(0.0 .. 100000.0)),
                         CenterOfMass::default(),
                         CollisionMargin(0.),
                         GravityScale(0.),
