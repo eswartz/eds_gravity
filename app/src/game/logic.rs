@@ -238,6 +238,13 @@ fn do_fire(
             MeshMaterial3d(mat.clone()),
             xfrm,
             DespawnAfter(Duration::from_secs(120)),
+
+            CollisionLayers::new(GameLayer::Projectiles, [
+                GameLayer::World,
+                GameLayer::Gameplay,
+                GameLayer::Projectiles,
+            ]),
+
         ), (
             Spawned,
             Projectile,

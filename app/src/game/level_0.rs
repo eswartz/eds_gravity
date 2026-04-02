@@ -63,7 +63,7 @@ fn on_level_loaded(
     #[allow(unused)]
     let cuboid_round = (ITEM_SIZE - cuboid_size) / 2.0;
 
-    const ITEM_GAP: f32 = 10.25;
+    const ITEM_GAP: f32 = 5.25;
     let axis_scale = Vec3::splat(ITEM_SIZE + ITEM_GAP);
 
     let gravity_object = GravityObject {
@@ -92,11 +92,23 @@ fn on_level_loaded(
                     ),
                     (
                         gravity_object.clone(),
-                        // Collider::sphere(ITEM_SIZE / 2.),
                         RigidBody::Dynamic,
                         // RigidBody::Kinematic,
                         // RigidBody::Static,
+
+                        // This tiny collider and the filters lets us participate in
+                        // LinearVelocity/ExternalForce without adding collision detection overhead.
+                        // The sphere is not used except as a marker to satisfy Avian component requirements.
+                        Collider::sphere(0.001),
+
+                        // Don't apply any DeathboxCollider or entity-entity collisions.
+                        CollisionLayers::new(GameLayer::Gameplay, [
+                            GameLayer::Projectiles,
+                        ]),
+
+                        // Collider::sphere(ITEM_SIZE / 2.),
                         // Collider::round_cuboid(cuboid_size, cuboid_size, cuboid_size, cuboid_round),
+
                         Restitution::new(0.05),
                         Friction::new(0.),
                         SleepThreshold {

@@ -130,7 +130,9 @@ impl GalaxyState {
 
 /// Mark entities which were manually edited in the last frame,
 /// to avoid losing edits from the gravity compute shader.
-#[derive(Clone, Resource, PartialEq, Default)]
+#[derive(Clone, Resource, PartialEq, Default, Reflect)]
+#[reflect(Resource)]
+#[type_path = "game"]
 pub struct GalaxyEdits {
     pub edited: EntityHashSet,
 }

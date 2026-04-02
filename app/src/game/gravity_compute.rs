@@ -9,7 +9,7 @@ use bytemuck::{Pod, Zeroable};
 use std::collections::HashMap;
 use avian3d::schedule::PhysicsTime;
 
-use eds_bevy_common::{is_paused, states_sets::ProgramState};
+use eds_bevy_common::{Grabbed, PauseState, is_paused, states_sets::ProgramState};
 
 use crate::game::gravity::{CollisionUpdate, ForceType, GalaxyEdits, GalaxyParams, GravityObject};
 // use crate::galaxy::{report_gravity, CollisionUpdate, GalaxyEdits, GalaxyParams, GravityObject};
@@ -48,6 +48,7 @@ impl Plugin for GravityComputePlugin {
             .add_systems(
                 Update,
                 (
+                    update_pause,
                     handle_inputs,
                     handle_collisions,
                     // report_gravity.run_if(|| false),
@@ -121,7 +122,9 @@ impl ComputeWorker for GravityComputeWorker {
     }
 }
 
-#[derive(Resource, Clone)]
+#[derive(Resource, Clone, Reflect)]
+#[reflect(Resource)]
+#[type_path = "game"]
 pub struct GravityComputeState {
     generation: u64,
     prev_generation: u64,
@@ -354,6 +357,19 @@ fn handle_outputs(
     }
 }
 
+/// Track changes in the world (should be rare except for new entities,
+/// user-moved entities, or colliders) and update point_info[_new] if needed.
+fn update_pause(
+    paused: Res<PauseState>,
+    mut generation: ResMut<GravityComputeState>,
+) {
+    if !paused.is_changed() {
+        return
+    }
+    if !paused.is_paused() {
+        generation.touch();
+    }
+}
 
 /// Track changes in the world (should be rare except for new entities,
 /// user-moved entities, or colliders) and update point_info[_new] if needed.
@@ -372,12 +388,13 @@ fn handle_inputs(
         &CenterOfMass,
         &GravityObject,
     )>,
+    grabbed_q: Query<&Grabbed>,
 )
 {
     // If something changed outside the gravity simulation
     // (as detected from the CPU side and reflected in a change to
     // the generation count), recreate the point info array.
-    let something_changed = generation.is_dirty() || !edits.edited.is_empty();
+    let something_changed = generation.is_dirty() || !edits.edited.is_empty() || !grabbed_q.is_empty();
     if !worker.ready() && !something_changed {
         return
     }
@@ -413,7 +430,7 @@ fn handle_inputs(
         // to hopefully minimize the chance of phasing through the world
         let mut synced = 0;
         for (ent, xfrm, vel, ang, mass, com, obj) in phys_q.iter() {
-            if !point_map.contains_key(&ent) || edits.edited.contains(&ent) || obj.is_colliding {
+            if !point_map.contains_key(&ent) || edits.edited.contains(&ent) || obj.is_colliding || grabbed_q.contains(ent) {
                 let (mut flags, strength) = match obj.force_type {
                     ForceType::None => (POINT_INFO_FLAG_FORCE_NONE, 0.0),
                     ForceType::Attract => (POINT_INFO_FLAG_FORCE_ATTRACT_REPEL, 1.0),
