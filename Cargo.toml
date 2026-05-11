@@ -111,7 +111,7 @@ tracing = { version = "0.1", features = [
 ] }
 console_log = "1.0.0"
 
-avian3d = { version = "0.6", default-features = false, features = [
+avian3d = { git = "https://github.com/Jondolf/avian.git", branch = "main", default-features = false, features = [
 	"3d",
     "default-collider",
 	"collider-from-mesh",
@@ -130,9 +130,9 @@ avian3d = { version = "0.6", default-features = false, features = [
 bevy_egui = { version = "0.39", features = ["render", "serde"] }
 bevy-inspector-egui = { version = "0.36" }
 
-firewheel = { git = "https://github.com/BillyDM/Firewheel", rev = "fff0eb1" }
+firewheel = { git = "https://github.com/BillyDM/Firewheel", rev = "f1e8219" }
 
-bevy_seedling = { git = "https://github.com/CorvusPrudens/bevy_seedling.git", rev = "b610bb1a9c40370eacc7a9e49239ce74addb826a", default-features = false, features = [
+bevy_seedling = { git = "https://github.com/CorvusPrudens/bevy_seedling.git", rev = "bfd2f33ddd81be928a796febf4ffff599999495a", default-features = false, features = [
     "wav", "ogg", "rand", "loudness", "reflect",
 
     "dev",
