@@ -20,9 +20,6 @@ pub struct LogicPlugin;
 impl Plugin for LogicPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_plugins(HighlightingPlugin)
-            .add_plugins(GrabbingPlugin)
-            .insert_resource(HighlightingMode::Enabled)
             .init_resource::<FirePower>()
             .insert_resource(FirePowerStats {
                 accel: 1.1,

@@ -631,9 +631,8 @@ fn on_enter_video_menu(
         },
     ));
     let set_fov = commands.register_system(IntoSystem::into_system(
-        |In(v): In<f32>, mut commands: Commands, mut s: ResMut<VideoSettings>| {
+        |In(v): In<f32>, mut s: ResMut<VideoSettings>| {
             s.fov_degrees = v;
-            commands.init_resource::<VideoCameraSettingsChanged>();
         },
     ));
 
@@ -650,9 +649,8 @@ fn on_enter_video_menu(
                 },
             ));
             let $setter = commands.register_system(IntoSystem::into_system(
-                |In(v): In<usize>, mut res: ResMut<$res>, mut commands: Commands| {
+                |In(v): In<usize>, mut res: ResMut<$res>| {
                     res.$field = $enum::VARIANTS[v];
-                    commands.init_resource::<VideoEffectSettingsChanged>();
                 },
             ));
         };

@@ -124,10 +124,11 @@ fn main() -> AppExit {
 
         .add_plugins(ActionPlugin)
 
-        .add_plugins(MenuPlugin)
         .add_plugins(LifecyclePlugin)
+        .add_plugins(MenuPlugin)
         .add_plugins(GuiPlugin)
-        .add_plugins(WorldUiPlugin)
+        .add_plugins(VideoPlugin)
+        .add_plugins(LightsPlugin)
         .add_plugins(WorldStatePlugin)
         .add_plugins(AudioPlugin)
         .add_plugins(CrosshairPlugin)
@@ -135,6 +136,10 @@ fn main() -> AppExit {
         .add_plugins(SkyboxPlugin)
         .add_plugins(LevelsPlugin)
         .add_plugins(DeathboxPlugin::default())
+
+        .add_plugins(HighlightingPlugin)
+        // .add_plugins(GrabbingPlugin)
+        .insert_resource(HighlightingMode::Disabled)
 
         .add_plugins(PlayerCameraPlugin)
         .add_plugins(PlayerInputPlugin)
