@@ -31,9 +31,6 @@ use bevy::light::NotShadowCaster;
 use bevy_asset_loader::prelude::*;
 use bevy_skein::SkeinPlugin;
 
-#[cfg(feature = "input_lim")]
-use leafwing_input_manager::prelude::*;
-
 use eds_bevy_common::*;
 
 #[cfg(target_arch = "wasm32")]
@@ -187,8 +184,6 @@ fn main() -> AppExit {
         .add_plugins(GamePlugin)
     ;
 
-    #[cfg(feature = "input_lim")]
-    app.insert_resource(create_input_map());
     #[cfg(feature = "input_bei")]
     app.add_systems(Startup, create_input_map);
 
@@ -213,15 +208,6 @@ fn main() -> AppExit {
     }
 
     app.run()
-}
-
-#[cfg(feature = "input_lim")]
-fn create_input_map() -> InputMap::<UserAction> {
-    let mut map = InputMap::default();
-    map.merge(&default_gui_input_map());
-    map.merge(&default_fps_input_map());
-    map.merge(&actions::extra_input_map());
-    map
 }
 
 #[cfg(feature = "input_bei")]
