@@ -167,7 +167,7 @@ strum = { version = "0.27.2", features = ["derive", "strum_macros"] }
 strum_macros = "0.27.2"
 
 leafwing-input-manager = { version = "0.20" }
-bevy_enhanced_input = { version = "0.24", features = ["reflect", "state", "serialize"] }
+bevy_enhanced_input = { version = "0.25", features = ["reflect", "state", "serialize"] }
 
 bevy_asset_loader = { version = "0.25.0", features = [
     "2d",

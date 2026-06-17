@@ -174,11 +174,7 @@ fn do_fire(
     if let Some(grabbed) = &grabbed_opt {
         // Fire the item we are holding, if it still exists.
         if exist_q.contains(grabbed.entity) {
-            commands.queue(WakeBody(grabbed.entity));
-            commands.entity(grabbed.entity).insert((
-                LinearVelocity(vel),
-            ));
-            commands.write_message(GrabbingCommand::ReleaseItems);
+            commands.write_message(GrabbingCommand::ReleaseItems(Some(vel)));
             any = true;
         } else {
             commands.write_message(GrabbingCommand::CancelGrabItems);
@@ -230,7 +226,8 @@ fn do_fire(
 }
 
 fn report_raycast(
-    mut info_q: Single<(&mut Text, &mut TextColor, &mut Visibility), With<InfoArea>>,
+    gui_area: GuiAreaMarkerLocator,
+    mut info_q: Query<(&mut Text, &mut TextColor, &mut Visibility)>,
     crosshair_target: Res<CrosshairTargets>,
     names_q: Query<Option<&Name>>,
 ) {
@@ -238,12 +235,14 @@ fn report_raycast(
         return
     }
 
-    let (ref mut text, ref mut color, ref mut visibility) = *info_q;
-    if let Some(message) = report_crosshair_targets(&crosshair_target, &names_q) {
-        visibility.set_if_neq(Visibility::Inherited);
-        text.0 = message;
-        color.0 = Color::Srgba(tailwind::GRAY_100);
-    } else {
-        visibility.set_if_neq(Visibility::Hidden);
-    }
+    gui_area.with_first(GuiAreaMarker::GameStatusArea, |ent| {
+        let Ok((ref mut text, ref mut color, ref mut visibility)) = info_q.get_mut(ent) else { return };
+        if let Some(message) = report_crosshair_targets(&crosshair_target, &names_q) {
+            visibility.set_if_neq(Visibility::Inherited);
+            text.0 = message;
+            color.0 = Color::Srgba(tailwind::GRAY_100);
+        } else {
+            visibility.set_if_neq(Visibility::Hidden);
+        }
+    });
 }

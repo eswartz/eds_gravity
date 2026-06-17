@@ -11,7 +11,7 @@ mod level_0;
 use avian3d::math::Vector;
 use bevy::asset::RenderAssetUsages;
 use bevy::color::palettes::tailwind;
-use bevy::mesh::{VertexAttributeValues, triangle_normal};
+use bevy::mesh::VertexAttributeValues;
 use bevy_tweening::lens::TextColorLens;
 use bevy_tweening::{AnimTarget, EaseMethod, Tween, TweenAnim};
 pub use logic::*;
@@ -123,49 +123,9 @@ impl Plugin for GamePlugin {
             )
 
             .add_systems(
-                OnEnter(LevelState::Won),
-                won_level,
-            )
-            .add_systems(
-                OnEnter(LevelState::Lost),
-                lost_level
-            )
-
-            .add_systems(
                 OnEnter(LevelState::Advance),
                 advance_level
             )
-
-            // .add_observer(
-            //     handle_grab_actions
-            //         .run_if(not(is_paused))
-            //         .run_if(not(is_in_menu))
-            //         .run_if(in_state(LevelState::Playing))
-            //         .run_if(in_state(ProgramState::InGame))
-            //     ,
-            // )
-            .add_systems(
-                Update,
-                (
-                    update_current_score,
-                )
-                    .run_if(not(is_in_menu))
-                    .run_if(in_state(LevelState::Playing))
-                    .run_if(in_state(ProgramState::InGame))
-                ,
-            )
-
-            .add_systems(
-                Update,
-                (
-                    check_won_level.run_if(in_state(LevelState::Won)),
-                    check_lost_level.run_if(in_state(LevelState::Lost)),
-                )
-                    .run_if(not(is_in_menu))
-                    .run_if(in_state(ProgramState::InGame))
-                ,
-            )
-
         ;
     }
 }
@@ -494,8 +454,6 @@ pub(crate) fn spawn_level(
     level_list: Res<LevelList>,
     level_index: Res<LevelIndex>,
     world: Res<WorldMarkerEntity>,
-    mut score_q: Query<&mut Text, (With<ScoreArea>, Without<GameStatusArea>)>,
-    mut status_q: Query<&mut Text, (With<GameStatusArea>, Without<ScoreArea>)>,
 ) {
     setup_level(commands.reborrow(), &level_list, &level_index);
 
@@ -558,7 +516,8 @@ fn show_instructions(
     mut commands: Commands,
     showed: Option<Res<ShowedTutorial>>,
     fonts: Res<CommonGuiAssets>,
-    instructions_q: Single<Entity, With<InstructionsArea>>,
+    gui_area: GuiAreaMarkerLocator,
+    // instructions_q: Single<Entity, With<InstructionsArea>>,
 ) {
     if showed.is_some() {
         return;
@@ -568,24 +527,26 @@ fn show_instructions(
 
     let mut text_ent = Entity::PLACEHOLDER;
 
-    commands.entity(*instructions_q).insert(Visibility::Inherited)  // show
-    .with_children(|builder| {
-        text_ent = builder.spawn((
-            DespawnOnExit(GameplayState::Playing),
-            Text::new("",
-            ),
-            TextLayout::new(Justify::Center, LineBreak::WordBoundary),
-            TextFont {
-                font: fonts.std_ui.clone(),
-                font_size: 32.0,
-                .. default()
-            },
-            TextColor(Color::WHITE.with_alpha(0.5)),
-            TextShadow {
-                offset: Vec2::splat(2.),
-                color: Color::linear_rgba(0., 0., 0., 0.0),
-            },
-        )).id();
+    gui_area.with_first(GuiAreaMarker::InstructionsArea, |ent| {
+        commands.entity(ent).insert(Visibility::Inherited)  // show
+        .with_children(|builder| {
+            text_ent = builder.spawn((
+                DespawnOnExit(GameplayState::Playing),
+                Text::new("",
+                ),
+                TextLayout::new(Justify::Center, LineBreak::WordBoundary),
+                TextFont {
+                    font: fonts.std_ui.clone(),
+                    font_size: 32.0,
+                    .. default()
+                },
+                TextColor(Color::WHITE.with_alpha(0.5)),
+                TextShadow {
+                    offset: Vec2::splat(2.),
+                    color: Color::linear_rgba(0., 0., 0., 0.0),
+                },
+            )).id();
+        });
     });
 
     // Fade in and out.
@@ -624,118 +585,9 @@ fn show_instructions(
 
 pub(crate) fn advance_level(
     mut commands: Commands,
-    // spawned_q: Query<Entity, With<Spawned>>,
 ) {
-    // for ent in spawned_q.iter() {
-    //     commands.entity(ent).try_despawn();
-    // }
     commands.set_state(OverlayState::Loading);
     commands.set_state(GameplayState::Setup);
-}
-
-fn update_current_score(
-    mut commands: Commands,
-    level_state: Res<State<LevelState>>,
-    score: Option<Res<CurrentScore>>,
-    mut score_q: Single<(&mut Text, &mut TextColor), With<ScoreArea>>,
-    // goal_q: Query<&ScoreGoal, With<LevelRoot>>,
-) {
-    // let Ok(goal) = goal_q.single() else {
-    //     if *level_state == LevelState::LoadingSkybox {
-    //         // This is allowable, but report once just in case.
-    //         log::warn!("missing or too many LevelRoot + ScoreGoal");
-    //     };
-    //     return;
-    // };
-
-    let (ref mut text, ref mut color) = *score_q;
-    // if let Some(score) = score {
-    if score.is_some() {
-        if *level_state == LevelState::Playing {
-            // let won = score.score >= goal.goal as _;
-            // let lost = score.score <= goal.lose;
-
-            let won = false;
-            let lost = false;
-            text.0 = String::new();
-            color.0 = Color::Srgba(if won {
-                tailwind::LIME_300
-            } else if lost {
-                tailwind::RED_700
-            } else {
-                tailwind::GRAY_100
-            });
-
-            if won {
-                commands.set_state(LevelState::Won);
-            } else if lost {
-                commands.set_state(LevelState::Lost);
-            }
-        }
-    } else {
-        text.0.clear();
-    }
-}
-
-fn won_level(
-    mut commands: Commands,
-    mut score_q: Single<(&mut Text, &mut TextColor), With<GameStatusArea>>,
-) {
-    let (ref mut text, ref mut color) = *score_q;
-    text.0 = "Passed!".to_string();
-    color.0 = Color::Srgba(tailwind::LIME_300);
-
-    commands.insert_resource(AutoEndLevelTimer(Timer::new(Duration::from_secs(END_LEVEL_DELAY_SECS), TimerMode::Once)));
-}
-
-fn lost_level(
-    mut commands: Commands,
-    mut score_q: Single<(&mut Text, &mut TextColor), With<GameStatusArea>>,
-) {
-    let (ref mut text, ref mut color) = *score_q;
-    text.0 = "Failed...\nTry again!".to_string();
-    color.0 = Color::Srgba(tailwind::RED_700);
-
-    commands.insert_resource(AutoEndLevelTimer(Timer::new(Duration::from_secs(END_LEVEL_DELAY_SECS), TimerMode::Once)));
-}
-
-fn check_won_level(
-    mut commands: Commands,
-    mut end_timer: ResMut<AutoEndLevelTimer>,
-    time: Res<Time<Physics>>,
-    level_index: ResMut<LevelIndex>,
-    level_list: Res<LevelList>,
-) {
-    if !end_timer.0.tick(time.delta()).is_finished() {
-        return;
-    }
-
-    let next_index = level_index.0 + 1;
-    if next_index >= level_list.0.len() {
-        commands.set_state(ProgramState::Completed);
-        commands.set_state(LevelState::Initializing);
-        commands.set_state(GameplayState::Done);
-        commands.set_state(OverlayState::GameOverScreen);
-
-        // Restart next time.
-        commands.insert_resource(LevelIndex(0));
-    } else {
-        commands.insert_resource(LevelIndex(next_index));
-        commands.set_state(LevelState::Advance);
-    }
-}
-
-fn check_lost_level(
-    mut commands: Commands,
-    mut end_timer: ResMut<AutoEndLevelTimer>,
-    time: Res<Time<Physics>>,
-) {
-    if !end_timer.0.tick(time.delta()).is_finished() {
-        return;
-    }
-
-    // Restarts level.
-    commands.set_state(LevelState::Advance);
 }
 
 /// The power bar image inside [HandStatusArea].
@@ -748,68 +600,76 @@ pub struct PowerBarText;
 
 fn show_power_bar(
     mut commands: Commands,
-    hand_q: Single<Entity, With<HandStatusArea>>,
+    gui_area: GuiAreaMarkerLocator,
     assets: Res<CommonGuiAssets>,
 ) {
-    commands.entity(*hand_q)
-        .insert(UiNodeAlpha(0.0))
-        .with_children(|builder| {
-        builder.spawn((
-            Name::new("PowerBar"),
-            PowerBarImage,
-            Visibility::Inherited,
-            UiNodeAlpha(1.0),
-            ImageNode::new(assets.power_bar.clone())
-                .with_color(Color::WHITE),
-            Node {
-                width: Val::Vw(10.),
-                max_width: Val::Vw(10.),
-                min_width: Val::Px(128.),
-                aspect_ratio: Some(4.0),
-                align_content: AlignContent::Stretch,
-                ..default()
-            },
-        ));
-        builder.spawn((
-            Name::new("InHandText"),
-            PowerBarText,
-            Visibility::Inherited,
-            UiNodeAlpha(1.0),
-            Node {
-                ..default()
-            },
-            TextFont {
-                font: assets.std_ui.clone(),
-                font_size: 24.0,
-                weight: FontWeight::BOLD,
-                .. default()
-            },
-            TextColor(Color::Srgba(tailwind::RED_700)),
-            TextShadow {
-                offset: Vec2::splat(1.0),
-                color: Color::WHITE,
-            },
-            Text::new("POWER"),
-        ));
+    gui_area.with_first(GuiAreaMarker::HandStatusArea, |ent| {
+        commands.entity(ent)
+            .insert(UiNodeAlpha(0.0))
+            .with_children(|builder| {
+            builder.spawn((
+                Name::new("PowerBar"),
+                PowerBarImage,
+                Visibility::Inherited,
+                UiNodeAlpha(1.0),
+                ImageNode::new(assets.power_bar.clone())
+                    .with_color(Color::WHITE),
+                Node {
+                    width: Val::Vw(10.),
+                    max_width: Val::Vw(10.),
+                    min_width: Val::Px(128.),
+                    aspect_ratio: Some(4.0),
+                    align_content: AlignContent::Stretch,
+                    ..default()
+                },
+            ));
+            builder.spawn((
+                Name::new("InHandText"),
+                PowerBarText,
+                Visibility::Inherited,
+                UiNodeAlpha(1.0),
+                Node {
+                    ..default()
+                },
+                TextFont {
+                    font: assets.std_ui.clone(),
+                    font_size: 24.0,
+                    weight: FontWeight::BOLD,
+                    .. default()
+                },
+                TextColor(Color::Srgba(tailwind::RED_700)),
+                TextShadow {
+                    offset: Vec2::splat(1.0),
+                    color: Color::WHITE,
+                },
+                Text::new("POWER"),
+            ));
+        });
     });
 }
 
 fn remove_power_bar(
     mut commands: Commands,
     child_q: Query<&Children>,
-    hand_q: Single<Entity, With<HandStatusArea>>,
+    gui_area: GuiAreaMarkerLocator,
 ) {
-    let ent = *hand_q;
-    for kid in child_q.iter_descendants(ent) {
-        commands.entity(kid).try_despawn();
-    }
+    gui_area.with_first(GuiAreaMarker::HandStatusArea, |ent| {
+        for kid in child_q.iter_descendants(ent) {
+            commands.entity(kid).try_despawn();
+        }
+    });
 }
 
 fn update_power_bar(
-    mut alpha_q: Single<&mut UiNodeAlpha, With<HandStatusArea>>,
+    gui_area: GuiAreaMarkerLocator,
+    mut alpha_q: Query<&mut UiNodeAlpha>,
     fire_power: Res<FirePower>,
 ) {
     if fire_power.is_changed() {
-        alpha_q.0 = (**fire_power / 50.0).clamp(0.0, 1.0);
+        gui_area.with_first(GuiAreaMarker::HandStatusArea, |ent| {
+            if let Ok(mut alpha) = alpha_q.get_mut(ent) {
+                alpha.0 = (**fire_power / 50.0).clamp(0.0, 1.0);
+            }
+        });
     }
 }
