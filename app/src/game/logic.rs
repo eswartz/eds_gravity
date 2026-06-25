@@ -109,7 +109,7 @@ fn check_actions(
 
     fire_events: Query<&ActionEvents, (With<Action<actions::Firing>>, With<PlayerAction>)>,
 
-    player_q: Query<(Entity, &Transform, &ColliderAabb), With<Player>>,
+    player_q: Query<(Entity, &GlobalTransform, &ColliderAabb), With<Player>>,
     player_look_q: Query<&PlayerLook>,
 
     grabbed_opt: Option<Res<GrabbedItem>>,
@@ -133,7 +133,7 @@ fn check_actions(
         return;
     };
 
-    let eyes = player_eyes(player_xfrm, aabb, look);
+    let eyes = player_eyes(player_xfrm.translation(), aabb, look);
     let position = player_gun(&look.rotation, eyes);
 
     let fire = fire_events.iter().next().unwrap();
